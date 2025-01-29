@@ -1,0 +1,8 @@
+# Ignore node_modules (created when you install packages)
+node_modules/
+
+# Ignore environment variables
+.env
+
+# Ignore macOS system files
+.DS_Store
