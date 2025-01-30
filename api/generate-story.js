@@ -84,7 +84,7 @@ export default async function handler(req, res) {
         Guidelines:
         1. Keep character actions consistent
         2. Reference relevant history when appropriate
-        3. Respond in 2-3 paragraphs`
+        3. Respond in 1-2 paragraphs`
       },
       {
         role: "user",
@@ -101,7 +101,7 @@ export default async function handler(req, res) {
       model: 'gpt-4o',
       messages,
       temperature: 0.7,
-      max_tokens: 150
+      max_tokens: 250
     }, { signal: controller.signal });
     
     clearTimeout(timeout);
