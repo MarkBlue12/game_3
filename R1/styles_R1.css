@@ -1,0 +1,117 @@
+/* styles.css */
+body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    margin: 20px;
+  }
+  
+  #story-container {
+    max-width: 800px;
+    margin: 0 auto 20px;
+  }
+
+  #story-history {
+    max-height: 60vh;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    margin: 20px auto;
+    text-align: left;
+    background: #f8f9fa;
+  }
+  
+  .story-segment {
+    margin-bottom: 25px;
+    padding: 15px;
+    border-left: 4px solid #4CAF50;
+    background: white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+  
+  .user-action {
+    color: #2c7a7b;
+    border-color: #2c7a7b;
+    font-style: italic;
+    margin-bottom: 15px;
+  }
+  
+  .error-message {
+    color: #dc3545;
+    padding: 10px;
+    background: #ffe6e6;
+    border-radius: 4px;
+    margin-top: 10px;
+  }
+  
+  .story-text {
+    line-height: 1.6;
+    color: #333;
+  }
+
+  textarea {
+    width: 80%;
+    min-width: 300px;
+    height: 120px;
+    padding: 15px;
+    margin: 20px 0;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-family: 'Arial', sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    resize: vertical;
+    transition: all 0.3s ease;
+  }
+  
+  textarea:focus {
+    outline: none;
+    border-color: #4a90e2;
+    box-shadow: 0 0 8px rgba(74, 144, 226, 0.2);
+  }
+  
+  button {
+    display: block;
+    width: 200px;
+    padding: 12px 24px;
+    margin: 0 auto 30px;
+    background-color: #4a90e2;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  button:hover {
+    background-color: #357abd;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  }
+  
+  button:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  button:disabled {
+    background-color: #a0c4f3;
+    cursor: not-allowed;
+    opacity: 0.8;
+  }
+  
+  /* Responsive Design */
+  @media (max-width: 768px) {
+    textarea {
+      width: 90%;
+      height: 100px;
+    }
+    
+    button {
+      width: 90%;
+      max-width: 200px;
+    }
+  }

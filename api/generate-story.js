@@ -4,88 +4,120 @@ import OpenAI from 'openai';
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
+// Semantic search function
+async function findRelevantContext(userAction) {
+  try {
+    // Create embedding for user action
+    const actionEmbedding = await openai.embeddings.create({
+      model: "text-embedding-3-small",
+      input: userAction
+    });
+
+    // Search for similar story segments
+    const { data, error } = await supabase.rpc('match_stories', {
+      query_embedding: actionEmbedding.data[0].embedding,
+      match_threshold: 0.7,
+      match_count: 3
+    });
+
+    if (error) throw error;
+    return data.map(entry => entry.story).join("\n\n");
+    
+  } catch (error) {
+    console.error('Search error:', error);
+    return ""; // Return empty if search fails
+  }
+}
+
 export default async function handler(req, res) {
+  // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
+  // Handle preflight
+  if (req.method === 'OPTIONS') return res.status(200).end();
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
     const { action, storySoFar } = req.body;
     
-    // Input validation
-    if (!action || typeof action !== 'string') {
-      return res.status(400).json({ error: "Invalid action provided" });
-    }
-    if (storySoFar && typeof storySoFar !== 'string') {
-      return res.status(400).json({ error: "Invalid story history format" });
-    }
+    // Validate input
+    if (!action?.trim()) return res.status(400).json({ error: "Invalid action" });
+    if (typeof storySoFar !== 'string') return res.status(400).json({ error: "Invalid story format" });
 
-    // Context processing
+    // Step 1: Find relevant past context
+    const relevantHistory = await findRelevantContext(action);
+    
+    // Step 2: Process current context
     const MAX_CONTEXT_LENGTH = 2000;
-    const processedContext = storySoFar 
-      ? storySoFar.slice(-MAX_CONTEXT_LENGTH) + (storySoFar.length > MAX_CONTEXT_LENGTH ? "... [truncated]" : "")
-      : "No existing story";
-
-    // Timeout setup
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 9000);
-
+    const currentContext = storySoFar.slice(-MAX_CONTEXT_LENGTH);
+    
+    // Step 3: Build AI prompt
     const messages = [
       { 
         role: "system", 
-        content: `You are a creative storyteller. Continue the narrative based on this story history and user action.
+        content: `You are a story writer. Use this relevant history:
+        ${relevantHistory}
+        
+        Current story context:
+        ${currentContext || "Begin new story"}
+        
         Guidelines:
-        1. Maintain consistent characters and setting
-        2. Keep responses under 150 words
-        3. Use ${storySoFar ? "the existing story context" : "your creativity"} for continuity`
+        1. Keep character actions consistent
+        2. Reference relevant history when appropriate
+        3. Respond in 2-3 paragraphs`
       },
       {
         role: "user",
-        content: `STORY HISTORY:
-${processedContext}
-
-USER ACTION:
-${action}
-
-STORY CONTINUATION:`
+        content: `USER'S ACTION: ${action}\nSTORY CONTINUATION:`
       }
     ];
 
+    // Step 4: Generate story with timeout
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
+    
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4o',
+      model: 'gpt-4',
       messages,
       temperature: 0.7,
-      max_tokens: 300
+      max_tokens: 400
     }, { signal: controller.signal });
-
+    
     clearTimeout(timeout);
-
     const story = completion.choices[0].message.content;
 
-    const { error } = await supabase
+    // Step 5: Save to database with embedding
+    const { data, error: insertError } = await supabase
       .from('stories')
       .insert([{ 
-        action,
+        action, 
         story,
-        context: processedContext
-      }]);
+        context: currentContext
+      }])
+      .select('id')
+      .single();
 
-    if (error) throw error;
+    if (insertError) throw insertError;
+    
+    // Create and store embedding
+    const embedding = await openai.embeddings.create({
+      model: "text-embedding-3-small",
+      input: story
+    });
+    
+    await supabase
+      .from('stories')
+      .update({ embedding: embedding.data[0].embedding })
+      .eq('id', data.id);
 
     return res.status(200).json({ story });
 
   } catch (error) {
     console.error('Server error:', error);
     if (error.name === 'AbortError') {
-      return res.status(504).json({ error: "OpenAI request timed out" });
+      return res.status(504).json({ error: "Request timed out" });
     }
     return res.status(500).json({ 
       error: error.message || 'Internal server error' 
