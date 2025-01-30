@@ -13,25 +13,42 @@ body {
   #story-history {
     max-height: 60vh;
     overflow-y: auto;
-    border: 1px solid #ccc;
+    border: 1px solid #ddd;
+    border-radius: 8px;
     padding: 20px;
-    margin-bottom: 20px;
+    margin: 20px auto;
     text-align: left;
-  }
-
-  .story-segment {
-    margin-bottom: 20px;
-    padding: 10px;
-    border-radius: 5px;
-    background-color: #f8f9fa;
-  }
-
-  .user-action {
-    color: #2c7a7b;
-    font-style: italic;
-    margin-bottom: 10px;
+    background: #f8f9fa;
   }
   
+  .story-segment {
+    margin-bottom: 25px;
+    padding: 15px;
+    border-left: 4px solid #4CAF50;
+    background: white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+  
+  .user-action {
+    color: #2c7a7b;
+    border-color: #2c7a7b;
+    font-style: italic;
+    margin-bottom: 15px;
+  }
+  
+  .error-message {
+    color: #dc3545;
+    padding: 10px;
+    background: #ffe6e6;
+    border-radius: 4px;
+    margin-top: 10px;
+  }
+  
+  .story-text {
+    line-height: 1.6;
+    color: #333;
+  }
+
   textarea {
     width: 80%;
     height: 100px;

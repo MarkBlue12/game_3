@@ -1,86 +1,102 @@
-const storyText = document.getElementById('story-text');
-const submitButton = document.getElementById('submit-action');
+// script.js
 const storyHistoryElement = document.getElementById('story-history');
+const userInputElement = document.getElementById('user-input');
+const submitButton = document.getElementById('submit-action');
+
+// Initialize story with first segment
 let fullStory = [{
   type: 'story',
   content: "Once upon a time, there is a 20 yrs old young man from England"
 }];
 
-// Initial display
+// Initial display setup
 updateStoryDisplay();
 
 function updateStoryDisplay() {
+  // Clear current story display
   storyHistoryElement.innerHTML = '';
+  
+  // Create elements for each story segment
   fullStory.forEach(segment => {
-    const div = document.createElement('div');
-    div.className = `story-segment ${segment.type}`;
-    div.innerHTML = segment.type === 'user' 
-      ? `<span class="user-action">You decided:</span> ${segment.content}`
-      : segment.content;
-    storyHistoryElement.appendChild(div);
+    const segmentDiv = document.createElement('div');
+    segmentDiv.className = `story-segment ${segment.type}`;
+    
+    if (segment.type === 'user') {
+      segmentDiv.innerHTML = `
+        <div class="user-action">
+          <strong>Your Decision:</strong> 
+          <em>${segment.content}</em>
+        </div>
+      `;
+    } else {
+      segmentDiv.innerHTML = `
+        <div class="story-text">${segment.content}</div>
+      `;
+    }
+    
+    storyHistoryElement.appendChild(segmentDiv);
   });
+
   // Auto-scroll to bottom
   storyHistoryElement.scrollTop = storyHistoryElement.scrollHeight;
 }
 
 submitButton.addEventListener('click', async () => {
-  const userInput = document.getElementById('user-input').value.trim();
-  
+  const userInput = userInputElement.value.trim();
+
+  // Validate input
   if (!userInput) {
-    storyText.textContent = "Please enter an action!";
+    alert('Please enter an action before submitting!');
     return;
   }
 
+  // Disable button during processing
   submitButton.disabled = true;
-  submitButton.textContent = "Generating...";
+  submitButton.textContent = 'Creating Story...';
 
   try {
+    // Get story continuation
     const response = await fetch('https://game-3.vercel.app/api/generate-story', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         action: userInput,
-        storySoFar: storyHistory.join("\n\n")
+        storySoFar: fullStory
+          .filter(segment => segment.type === 'story')
+          .map(segment => segment.content)
+          .join('\n\n')
       }),
     });
-        // Update story history
-    fullStory.push({
-        type: 'user',
-        content: userInput
-    });
-    fullStory.push({
-        type: 'story',
-        content: data.story
-    });
 
-    // Keep only last 20 segments (10 interactions)
-    if (fullStory.length > 20) {
-        fullStory = fullStory.slice(-20);
-    }
-
-    updateStoryDisplay();
-    document.getElementById('user-input').value = '';
-
-    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+    if (!response.ok) throw new Error(`Server error: ${response.status}`);
+    
     const data = await response.json();
 
-    storyHistory.push(`User action: ${userInput}`);
-    storyHistory.push(`Story continuation: ${data.story}`);
-    
-    if (storyHistory.length > 20) {
-      storyHistory = storyHistory.slice(-20);
+    // Add user action and story continuation
+    fullStory.push(
+      { type: 'user', content: userInput },
+      { type: 'story', content: data.story }
+    );
+
+    // Keep last 20 segments (10 interactions)
+    if (fullStory.length > 20) {
+      fullStory = fullStory.slice(-20);
     }
 
-    storyText.textContent = data.story;
-    document.getElementById('user-input').value = '';
+    // Update display and clear input
+    updateStoryDisplay();
+    userInputElement.value = '';
 
   } catch (error) {
     console.error('Error:', error);
-    storyText.textContent = error.message.startsWith("HTTP error") 
-      ? "Server error. Please try later."
-      : "Connection failed. Check your network.";
+    storyHistoryElement.innerHTML += `
+      <div class="error-message">
+        Failed to generate story: ${error.message}
+      </div>
+    `;
   } finally {
+    // Reset button state
     submitButton.disabled = false;
-    submitButton.textContent = "Submit";
+    submitButton.textContent = 'Submit';
   }
 });
