@@ -101,7 +101,7 @@ export default async function handler(req, res) {
       model: 'gpt-4o',
       messages,
       temperature: 0.7,
-      max_tokens: 250
+      max_tokens: 200
     }, { signal: controller.signal });
     
     clearTimeout(timeout);
