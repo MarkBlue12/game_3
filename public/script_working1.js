@@ -1,27 +1,6 @@
 const storyText = document.getElementById('story-text');
 const submitButton = document.getElementById('submit-action');
-const storyHistoryElement = document.getElementById('story-history');
-let fullStory = [{
-  type: 'story',
-  content: "Once upon a time, there is a 20 yrs old young man from England"
-}];
-
-// Initial display
-updateStoryDisplay();
-
-function updateStoryDisplay() {
-  storyHistoryElement.innerHTML = '';
-  fullStory.forEach(segment => {
-    const div = document.createElement('div');
-    div.className = `story-segment ${segment.type}`;
-    div.innerHTML = segment.type === 'user' 
-      ? `<span class="user-action">You decided:</span> ${segment.content}`
-      : segment.content;
-    storyHistoryElement.appendChild(div);
-  });
-  // Auto-scroll to bottom
-  storyHistoryElement.scrollTop = storyHistoryElement.scrollHeight;
-}
+let storyHistory = ["Once upon a time, there is a 20 yrs old young man from England"];
 
 submitButton.addEventListener('click', async () => {
   const userInput = document.getElementById('user-input').value.trim();
@@ -43,23 +22,6 @@ submitButton.addEventListener('click', async () => {
         storySoFar: storyHistory.join("\n\n")
       }),
     });
-        // Update story history
-    fullStory.push({
-        type: 'user',
-        content: userInput
-    });
-    fullStory.push({
-        type: 'story',
-        content: data.story
-    });
-
-    // Keep only last 20 segments (10 interactions)
-    if (fullStory.length > 20) {
-        fullStory = fullStory.slice(-20);
-    }
-
-    updateStoryDisplay();
-    document.getElementById('user-input').value = '';
 
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     const data = await response.json();

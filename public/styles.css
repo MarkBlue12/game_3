@@ -6,7 +6,30 @@ body {
   }
   
   #story-container {
+    max-width: 800px;
+    margin: 0 auto 20px;
+  }
+
+  #story-history {
+    max-height: 60vh;
+    overflow-y: auto;
+    border: 1px solid #ccc;
+    padding: 20px;
     margin-bottom: 20px;
+    text-align: left;
+  }
+
+  .story-segment {
+    margin-bottom: 20px;
+    padding: 10px;
+    border-radius: 5px;
+    background-color: #f8f9fa;
+  }
+
+  .user-action {
+    color: #2c7a7b;
+    font-style: italic;
+    margin-bottom: 10px;
   }
   
   textarea {
