@@ -28,6 +28,24 @@ async function findRelevantContext(userAction) {
     return ""; // Return empty if search fails
   }
 }
+// split sentences, check for completeness, remove incomplete sentences, rebuild.
+function ensureCompleteSentences(text) {
+    const sentences = text.split(/(?<![A-Za-z]{2}\.)(?<=[.!?])\s+/g);
+    if (sentences.length === 0) return text;
+  
+    const lastSentence = sentences[sentences.length - 1];
+    if (!/[.!?]$/.test(lastSentence)) {
+      sentences.pop();
+    }
+  
+    let cleanedText = sentences.join(" ").trim();
+    
+    if (cleanedText.length === 0) return text + ".";
+    if (!/[.!?]$/.test(cleanedText)) cleanedText += ".";
+    
+    return cleanedText;
+}
+
 
 export default async function handler(req, res) {
   // CORS headers
@@ -78,6 +96,7 @@ export default async function handler(req, res) {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 15000);
     
+
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o',
       messages,
@@ -86,7 +105,10 @@ export default async function handler(req, res) {
     }, { signal: controller.signal });
     
     clearTimeout(timeout);
-    const story = completion.choices[0].message.content;
+    // const story = completion.choices[0].message.content;
+    let story = completion.choices[0].message.content;
+    // Clean up sentences
+    story = ensureCompleteSentences(story);
 
     // Step 5: Save to database with embedding
     const { data, error: insertError } = await supabase
